@@ -1,0 +1,40 @@
+Focus
+Unicoin - a global, legal tender settlement CBDC - unveiled at IMF Spring Meetings 2023
+ Jordan Finneseth
+Jordan Finneseth
+Monday April 10, 2023 11:26
+Kitco NewsShare this article:
+
+
+Editor note	Get all the essential market news and expert opinions in one place with our daily newsletter. Receive a comprehensive recap of the day's top stories directly to your inbox. Sign up here!
+
+
+
+(Kitco News) - During last week’s International Monetary Fund (IMF) Spring Meetings 2023, the Digital Currency Monetary Authority (DCMA) announced the launch of an international central bank digital currency (CBDC) known as the Universal Monetary Unit (UMU), which is symbolized by the ANSI Character Ü.
+
+According to a press release announcing the new currency, UMU, also known as Unicoin, is a legal money commodity that can transact in any legal tender settlement currency and functions like a CBDC to enforce banking regulations and “protect the financial integrity of the international banking system.”
+
+UMU “adopts a central banking monetary policy framework to ensure it has continuous purchasing demand, minimal price volatility, and annual asset pricing targets,” the announcement said.
+
+Banks will be able to utilize the new currency by attaching SWIFT Codes and bank accounts to a UMU digital currency wallet. This enables them to conduct SWIFT-like cross-border payments entirely over digital currency rails, accessing the best-priced wholesale FX rates and achieving instantaneous, real-time settlement while bypassing the correspondent banking system.
+
+“Cross-border payments can be slow, expensive, and risky,” said Tobias Adrian, Financial Counsellor at the International Monetary Fund. “In today's world of payments, counterparties in different jurisdictions rely on costly trusted relationships to offset the lack of a common settlement asset together with common rules and governance. But imagine if a multilateral platform existed that could improve cross-border payments—at the same time transforming foreign exchange transactions, risk sharing, and more generally, financial contracting.”
+
+Through the adoption of a global localization public monetary system architecture, UMU can be configured to operate according to the central banking regulations of each participating jurisdiction, the release said.
+
+“UMU is not attempting to disrupt the international monetary system,” said Darrell Hubbard, the Executive Director of the DCMA. “If fact, it strengthens it by helping the IMF achieve its stated mandate to provide economic and financial stability to its member states. UMU is a game-changer in how cross-border payments are transacted and mitigates against seasonal and systemic local currency depreciation.”
+
+
+
+U.S. lawmakers push back against the digital dollar
+In the proposed UMU Model Law legislation, Unicoin would be enacted as a complementary money commodity and function as a store of value, helping to mitigate against potential seasonable and systemic local currency depreciation and function as a payment currency at the time of settlement.
+
+Merchants and trading partners will be able to accept UMU as a form of payment for their goods and services priced in any national legal tender. “UMU has premium exchange rates built into its wallet and can convert any settlement currency amount to the equivalent UMU amount,” the press release said.
+
+UMU is specifically designed to support central banking and regulated financial institutions. It utilizes a staked proof of trust (SPOT) consensus protocol, along with a “multi-dimensional DLT (mDLT) capable of supporting any asset or liability ledger enabling full-service digital banking and international trade payments.”
+
+The DCMA hopes that UMU serves as “Crypto 2.0” through the introduction of “a new wave of cryptographic technologies for realizing a digital currency public monetary system with a widespread adoption framework encompassing use cases for all constituencies in a global economy.”
+
+According to George Walker, a Partner at Practus, LLP, who facilitated weekly meetings between the DMCA and the IMF where the whitepaper for the project was discussed, while the IMF has not made any official endorsements of UMU, the organization “has yet to state any objections to UMU’s FX premier rates and its monetary sovereignty approach.”
+
+Update (4/11): The title of this article was changed and the quote from George Walker was added to better reflect that Unicoin was presented at the IMF Spring Meetings, and was not specifically launched by the IMF.

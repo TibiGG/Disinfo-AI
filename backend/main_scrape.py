@@ -28,7 +28,7 @@ def summarise(text: str) -> str:
     return chain_output
 
 
-def main_scrape(query: str = "immigration healthcare"):
+def main_scrape(query: str = "IMF Unicoin endorsement"):
     # Load environment variables (the OpenAI env var in particular)
     articles = []
     for site in sites:
@@ -38,5 +38,9 @@ def main_scrape(query: str = "immigration healthcare"):
     for article in articles:
         summaries.append({"src": article["src"], "text": summarise(article["text"])})
     return summaries
+
+
+if __name__ == '__main__':
+    main_scrape()
 
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/

@@ -29,8 +29,13 @@ def scrape_link(link: str, id: str, urls_class: str, query: str = "immigration h
 
     # wait for the search results to appear
     wait = WebDriverWait(driver, 5)
-    search_results: list = wait.until(EC.presence_of_all_elements_located((By.XPATH,
-                                                                           f"//a[contains(@class, '{urls_class}')]")))
+    try:
+        search_results: list = wait.until(EC.presence_of_all_elements_located((By.XPATH,
+                                                                               f"//a[contains(@class, '{urls_class}')]")))
+    except TimeoutException:
+        print("Timed out: nothing found!")
+        driver.quit()
+        return []
 
     urls = list(dict.fromkeys(filter_out_nones([result.get_attribute("href") for result in search_results])))
     print(urls)
