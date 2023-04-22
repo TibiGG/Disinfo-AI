@@ -1,14 +1,22 @@
-# Welcome to Chainlit! 🚀🤖
+<center> 
 
-Hi there, Developer! 👋 We're excited to have you on board. Chainlit is a powerful tool designed to help you prototype, debug and share applications built on top of LLMs.
+<img src="leaf.png" width = "72">
 
-## Useful Links 🔗
+# Welcome to disinfo.ai! 📰🕵️✅
 
-- **Documentation:** Get started with our comprehensive [Chainlit Documentation](https://chainlit-43.mintlify.app/) 📚
-- **Discord Community:** Join our friendly [Chainlit Discord](https://discord.gg/ZThrUxbAYw) to ask questions, share your projects, and connect with other developers! 💬
+**We’re supporting media literacy throughout the UK.**
 
-We can't wait to see what you create with Chainlit! Happy coding! 💻😊
+*Disinfo.ai fights misinformation by automatically validating the claims made in news articles and sharing trusted sources. Through our proprietary validation tool, users will see fact-checks in real-time, allowing users to easily spot unreliable claims and proactively check validity.*
 
-## Welcome screen
+## What does disinfo.ai do?
 
-To modify the welcome screen, edit the `chainlit.md` file at the root of your project. If you do not want a welcome screen, just leave this file empty.
+👀 labels claims made in news article \
+⚠️ fact-checks every claim with reputable sources \
+✅ fact-checks every claim with reputable sources \
+
+## How to Use:
+
+📰 copy an article URL into the search bar below \
+🤩 disinfo.ai automatically finds claims, checks their validity, and shares sources 
+
+</center>
