@@ -4,6 +4,9 @@ from langchain import OpenAI, PromptTemplate, LLMChain
 
 from typing import List, Dict
 
+import scrapy
+from scrapy.crawler import CrawlerProcess
+
 from selenium import webdriver
 from selenium.common import TimeoutException
 from selenium.webdriver import Keys
@@ -12,16 +15,28 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.wait import WebDriverWait
 
+import chainlit as cl
+
 NUM_LINKS = 3
 
 sites = [
     {
         "link": "https://fullfact.org/search",
         "id": "gsc-i-id1",
-        "urls_class": "gs-title",
+        "url_wrapper_class": "gsc-expansionArea",
+    },
+#   {
+#       "link": "https://www.legislation.gov.uk",
+#       "id": "title",
+#       "url_wrapper_class": "results",
+#   },
+    {
+        "link": "https://www.ons.gov.uk/search",
+        "id": "search-in-page",
+        "url_wrapper_class": "flush--padding",
+#       "filter_id": "group-0"
     }
 ]
-
 
 visited_references = set()
 
@@ -30,7 +45,7 @@ def filter_out_nones(l: list):
     return [x for x in l if x is not None]
 
 
-def scrape_link(link: str, id: str, urls_class: str, query: str = "immigration healthcare") -> List[Dict[str, str]]:
+def scrape_link(link: str, id: str, url_wrapper_class: str, query: str = "immigration healthcare") -> List[Dict[str, str]]:
     # create a new instance of the Firefox driver
     options = Options()
     options.add_argument('--headless')
@@ -45,10 +60,11 @@ def scrape_link(link: str, id: str, urls_class: str, query: str = "immigration h
     search_input.send_keys(Keys.RETURN)
 
     # wait for the search results to appear
-    wait = WebDriverWait(driver, 2)
+    wait = WebDriverWait(driver, 1)
     try:
         search_results: list = wait.until(EC.presence_of_all_elements_located((By.XPATH,
-                                                                           f"//a[contains(@class, '{urls_class}')]")))
+           f"//div[contains(concat(' ', normalize-space(@class), ' '), ' {url_wrapper_class} ')]//a[not(@target='_blank')]"
+           f" | //ul[contains(concat(' ', normalize-space(@class), ' '), ' {url_wrapper_class} ')]//a[not(@target='_blank')]")))
     except TimeoutException:
         print("Timed out: nothing found!")
         driver.quit()
@@ -97,7 +113,7 @@ def main_scrape(query: str = "immigration healthcare"):
     # Load environment variables (the OpenAI env var in particular)
     articles = []
     for site in sites:
-        articles.extend(scrape_link(link=site["link"], id=site["id"], urls_class=site["urls_class"], query=query))
+        articles.extend(scrape_link(link=site["link"], id=site["id"], url_wrapper_class=site["url_wrapper_class"], query=query))
     # print(articles)
     summaries = []
     for article in articles:
@@ -136,10 +152,26 @@ def main_keyword(text: str) -> str:
     chain_output = chain.run(text)
     return chain_output
 
+"""
+class TestSpider(scrapy.Spider):
+    name = 'test'
+    def start_requests(self):
+        yield scrapy.Requests()
+
+
+def extract_article_web(url: str) -> str:
+    process = CrawlerProcess()
+    process.crawl(TestSpider)
+    process.start()
+"""
+
 
 @on_message  # this function will be called every time a user inputs a message in the UI
 def main(message: str):
     load_dotenv()
+    # Initialise query
+    visited_references.clear()
+
     send_message(
         content=f"Your article makes these claims:",
     )
@@ -155,7 +187,7 @@ def main(message: str):
     for claim in claims:
         keywords.append(main_keyword(claim))
 
-    keywords = [keyword.replace("\n", "") for keyword in keywords]
+    keywords = [keyword.strip() for keyword in keywords]
     print(keywords)
 
     for keyword in keywords:
@@ -166,11 +198,6 @@ def main(message: str):
         references = "\n".join(reference_list)
         if articles_print and references:
             send_message(
-                content=f"{articles_print}\n\nReferences:\n{references}",
+                content=f"{articles_print}\n\nReferences:\n\n{references}",
             )
 
-    """
-    send_message(
-      content=f"Received: {summarised_articles}",
-    )
-    """
