@@ -28,16 +28,15 @@ def summarise(text: str) -> str:
     return chain_output
 
 
-if __name__ == '__main__':
+def main_scrape(query: str = "immigration healthcare"):
     # Load environment variables (the OpenAI env var in particular)
-    load_dotenv()
     articles = []
     for site in sites:
-        articles.extend(scrape_link(link=site["link"], id=site["id"], urls_class=site["urls_class"]))
+        articles.extend(scrape_link(link=site["link"], id=site["id"], urls_class=site["urls_class"], query=query))
     # print(articles)
     summaries = []
     for article in articles:
         summaries.append({"src": article["src"], "text": summarise(article["text"])})
-    print(summaries)
+    return summaries
 
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/

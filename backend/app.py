@@ -1,3 +1,7 @@
+from chainlit import send_message, on_message
+from dotenv import load_dotenv
+from langchain import OpenAI, PromptTemplate, LLMChain
+
 from typing import List, Dict
 
 from selenium import webdriver
@@ -8,9 +12,19 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.wait import WebDriverWait
 
-from util import filter_out_nones
-
 NUM_LINKS = 3
+
+sites = [
+    {
+        "link": "https://fullfact.org/search",
+        "id": "gsc-i-id1",
+        "urls_class": "gs-title",
+    }
+]
+
+
+def filter_out_nones(l: list):
+    return [x for x in l if x is not None]
 
 
 def scrape_link(link: str, id: str, urls_class: str, query: str = "immigration healthcare") -> List[Dict[str, str]]:
@@ -54,3 +68,42 @@ def scrape_link(link: str, id: str, urls_class: str, query: str = "immigration h
     driver.quit()
     # time.sleep(1000)
     return articles
+
+# Press the green button in the gutter to run the script.
+def summarise(text: str) -> str:
+    load_dotenv()
+    llm = OpenAI(temperature=0.9)
+    prompt = PromptTemplate(
+        input_variables=["text"],
+        template="Summarise this in 2 short sentences:\n{text}"
+    )
+
+    chain = LLMChain(llm=llm, prompt=prompt)
+    chain_output = chain.run(text)
+    return chain_output
+
+
+def main_scrape(query: str = "immigration healthcare"):
+    # Load environment variables (the OpenAI env var in particular)
+    articles = []
+    for site in sites:
+        articles.extend(scrape_link(link=site["link"], id=site["id"], urls_class=site["urls_class"], query=query))
+    # print(articles)
+    summaries = []
+    for article in articles:
+        summaries.append({"src": article["src"], "text": summarise(article["text"])})
+    return summaries
+
+# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+
+
+@on_message  # this function will be called every time a user inputs a message in the UI
+def main(message: str):
+    load_dotenv()
+
+    summarised_articles = main_scrape(message)
+
+    # send back a reply to the user
+    send_message(
+      content=f"Received: {summarised_articles}",
+    )
