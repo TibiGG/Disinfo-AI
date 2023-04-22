@@ -1,4 +1,4 @@
-from chainlit import send_message, on_message, send_action, action
+from chainlit import send_message, on_message, send_action, action, user_session
 from dotenv import load_dotenv
 from langchain import OpenAI, PromptTemplate, LLMChain
 
@@ -41,6 +41,19 @@ visited_references = set()
 
 def filter_out_nones(l: list):
     return [x for x in l if x is not None]
+
+def scrape_article_only(link: str) -> str:
+    # Initialize Safari driver
+    driver = webdriver.Safari()
+    # Load page
+    driver.get(link)
+    # Find <article> element
+    article_elem = driver.find_element(By.CSS_SELECTOR, "article")
+    # Extract text from <article> element
+    article_text = article_elem.text
+    # Close driver
+    driver.quit()
+    return article_text
 
 
 def scrape_link(link: str, id: str, url_wrapper_class: str, query: str = "immigration healthcare") -> List[Dict[str, str]]:
@@ -183,7 +196,8 @@ def main(message: str):
     claims = [claim for claim in claims.split('\n') if claim != '']
     keywords = []
     for claim in claims:
-        keywords.append(main_keyword(claim))
+        # HACK: removing 'umu' from claim
+        keywords.append(main_keyword(claim.replace("UMU", "")))
 
     keywords = [keyword.strip() for keyword in keywords]
     print(keywords)
@@ -205,5 +219,7 @@ def main(message: str):
 
 @action("action0")
 def on_action(action):
-    print(action)
-    send_message(f"Executed action. This is the link: {action['description']}!")
+    url = action['description']
+    next_article: str = scrape_article_only(url)
+    send_message(content=f"### Fact checking new article at {url}...")
+    main(next_article)

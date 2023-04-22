@@ -1,7 +1,3 @@
-<center> 
-
-<img src="leaf.png" width = "72">
-
 # Welcome to disinfo.ai! 📰🕵️✅
 
 **We’re supporting media literacy throughout the UK.**
@@ -12,11 +8,9 @@
 
 👀 labels claims made in news article \
 ⚠️ fact-checks every claim with reputable sources \
-✅ fact-checks every claim with reputable sources \
+✅ shares additional credible sources to back up or refute claims
 
 ## How to Use:
 
 📰 copy an article URL into the search bar below \
 🤩 disinfo.ai automatically finds claims, checks their validity, and shares sources 
-
-</center>
