@@ -1,4 +1,4 @@
-from chainlit import send_message, on_message
+from chainlit import send_message, on_message, send_action, action
 from dotenv import load_dotenv
 from langchain import OpenAI, PromptTemplate, LLMChain
 
@@ -15,8 +15,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.wait import WebDriverWait
 
-import chainlit as cl
-
 NUM_LINKS = 3
 
 sites = [
@@ -30,12 +28,12 @@ sites = [
 #       "id": "title",
 #       "url_wrapper_class": "results",
 #   },
-    {
-        "link": "https://www.ons.gov.uk/search",
-        "id": "search-in-page",
-        "url_wrapper_class": "flush--padding",
+#   {
+#       "link": "https://www.ons.gov.uk/search",
+#       "id": "search-in-page",
+#       "url_wrapper_class": "flush--padding",
 #       "filter_id": "group-0"
-    }
+#   }
 ]
 
 visited_references = set()
@@ -47,9 +45,9 @@ def filter_out_nones(l: list):
 
 def scrape_link(link: str, id: str, url_wrapper_class: str, query: str = "immigration healthcare") -> List[Dict[str, str]]:
     # create a new instance of the Firefox driver
-    options = Options()
-    options.add_argument('--headless')
-    driver = webdriver.Chrome(options=options)
+    # options = Options()
+    # options.add_argument('--headless')
+    driver = webdriver.Safari()
 
     # navigate to your website
     driver.get(link)
@@ -194,10 +192,18 @@ def main(message: str):
         summarised_articles = main_scrape(keyword)
         articles_print = "\n\n".join([article["text"] for article in summarised_articles])
         reference_list = [article["src"] for article in summarised_articles]
+        n_references = len(reference_list)
         visited_references.update(reference_list)
-        references = "\n".join(reference_list)
+        references = "\n".join([f"{i}. {reference} Dig_Deeper {i}" for i, reference in enumerate(reference_list)])
         if articles_print and references:
             send_message(
-                content=f"{articles_print}\n\nReferences:\n\n{references}",
+                content=f"**{articles_print.strip()}**\n\nReferences:\n\n{references}",
             )
+            for i_ref, ref in enumerate(reference_list):
+                send_action(name="action0", trigger=f"Dig_Deeper {i_ref}",
+                            description=ref)
 
+@action("action0")
+def on_action(action):
+    print(action)
+    send_message(f"Executed action. This is the link: {action['description']}!")
