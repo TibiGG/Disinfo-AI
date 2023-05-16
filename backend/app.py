@@ -1,16 +1,13 @@
-from chainlit import send_message, on_message, send_action, action, user_session
+import re
+from typing import List, Dict, Optional
+
+from chainlit import send_message, on_message, send_action, action
 from dotenv import load_dotenv
 from langchain import OpenAI, PromptTemplate, LLMChain
-
-from typing import List, Dict
-
-import scrapy
-from scrapy.crawler import CrawlerProcess
-
 from selenium import webdriver
 from selenium.common import TimeoutException
 from selenium.webdriver import Keys
-from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.wait import WebDriverWait
@@ -22,18 +19,25 @@ sites = [
         "link": "https://fullfact.org/search",
         "id": "gsc-i-id1",
         "url_wrapper_class": "gsc-expansionArea",
+        "toggle_class": None
     },
-#   {
-#       "link": "https://www.legislation.gov.uk",
-#       "id": "title",
-#       "url_wrapper_class": "results",
-#   },
-#   {
-#       "link": "https://www.ons.gov.uk/search",
-#       "id": "search-in-page",
-#       "url_wrapper_class": "flush--padding",
-#       "filter_id": "group-0"
-#   }
+    {
+        "link": "https://oversight.house.gov/",
+        "id": "mobile-menu-search-input",
+        "url_wrapper_class": "post",
+        "toggle_class": "navbar-toggle"
+    }
+    #   {
+    #       "link": "https://www.legislation.gov.uk",
+    #       "id": "title",
+    #       "url_wrapper_class": "results",
+    #   },
+    #   {
+    #       "link": "https://www.ons.gov.uk/search",
+    #       "id": "search-in-page",
+    #       "url_wrapper_class": "flush--padding",
+    #       "filter_id": "group-0"
+    #   }
 ]
 
 visited_references = set()
@@ -42,9 +46,13 @@ visited_references = set()
 def filter_out_nones(l: list):
     return [x for x in l if x is not None]
 
+
 def scrape_article_only(link: str) -> str:
-    # Initialize Safari driver
-    driver = webdriver.Safari()
+    options = Options()
+    options.add_argument('--headless')
+    driver = webdriver.Firefox(options=options)
+    driver.set_window_size(375, 667)  # Example dimensions for iPhone 6/7/8
+
     # Load page
     driver.get(link)
     # Find <article> element
@@ -56,31 +64,39 @@ def scrape_article_only(link: str) -> str:
     return article_text
 
 
-def scrape_link(link: str, id: str, url_wrapper_class: str, query: str = "immigration healthcare") -> List[Dict[str, str]]:
-    # create a new instance of the Firefox driver
-    # options = Options()
-    # options.add_argument('--headless')
-    driver = webdriver.Safari()
+def scrape_link(link: str, id: str, url_wrapper_class: str, toggle_class: Optional[str] = None,
+                query: str = "immigration healthcare") -> List[Dict[str, str]]:
+    options = Options()
+    options.add_argument('--headless')
+    driver = webdriver.Firefox(options=options)
+    driver.set_window_size(375, 667)  # Example dimensions for iPhone 6/7/8
 
     # navigate to your website
     driver.get(link)
+
+    # if there's a toggleable element for navigation, toggle it now
+    if toggle_class:
+        navbar_toggle = driver.find_element(By.CLASS_NAME, toggle_class)
+        navbar_toggle.click()
+
+    # wait for the search results to appear
+    wait = WebDriverWait(driver, 1)
 
     # locate the search input field and enter your search query
     search_input = driver.find_element(by="id", value=id)
     search_input.send_keys(query)
     search_input.send_keys(Keys.RETURN)
 
-    # wait for the search results to appear
-    wait = WebDriverWait(driver, 1)
     try:
         search_results: list = wait.until(EC.presence_of_all_elements_located((By.XPATH,
-           f"//div[contains(concat(' ', normalize-space(@class), ' '), ' {url_wrapper_class} ')]//a[not(@target='_blank')]"
-           f" | //ul[contains(concat(' ', normalize-space(@class), ' '), ' {url_wrapper_class} ')]//a[not(@target='_blank')]")))
+                                                                               f"//div[contains(concat(' ', normalize-space(@class), ' '), ' {url_wrapper_class} ')]//a[not(@target='_blank')]"
+                                                                               f" | //ul[contains(concat(' ', normalize-space(@class), ' '), ' {url_wrapper_class} ')]//a[not(@target='_blank')]")))
     except TimeoutException:
         print("Timed out: nothing found!")
         driver.quit()
         return []
 
+    search_results
     urls = list(dict.fromkeys(filter_out_nones([result.get_attribute("href") for result in search_results])))
     print(urls)
     articles_scraped = 0
@@ -109,7 +125,7 @@ def scrape_link(link: str, id: str, url_wrapper_class: str, query: str = "immigr
 
 # Press the green button in the gutter to run the script.
 def summarise(text: str) -> str:
-    llm = OpenAI(temperature=0.9)
+    llm = OpenAI(model_name="text-davinci-003", temperature=0.9)
     prompt = PromptTemplate(
         input_variables=["text"],
         template="Summarise this in 2 short sentences:\n{text}"
@@ -124,7 +140,8 @@ def main_scrape(query: str = "immigration healthcare"):
     # Load environment variables (the OpenAI env var in particular)
     articles = []
     for site in sites:
-        articles.extend(scrape_link(link=site["link"], id=site["id"], url_wrapper_class=site["url_wrapper_class"], query=query))
+        articles.extend(scrape_link(link=site["link"], id=site["id"], url_wrapper_class=site["url_wrapper_class"],
+                                    toggle_class=site["toggle_class"], query=query))
     # print(articles)
     summaries = []
     for article in articles:
@@ -136,7 +153,7 @@ def main_scrape(query: str = "immigration healthcare"):
 
 
 def main_claims(text: str) -> str:
-    llm = OpenAI(temperature=0.9)
+    llm = OpenAI(model_name="text-davinci-003", temperature=0.9)
     prompt = PromptTemplate(
         input_variables=["text"],
         template="You are factGPT. Read the following article/text and assess the claims it makes which are most likely"
@@ -152,16 +169,27 @@ def main_claims(text: str) -> str:
     return chain_output
 
 
+def remove_punctuation(text):
+    # Define the pattern to match non-alphanumeric characters or spaces
+    pattern = r"[^a-zA-Z0-9\s]"
+
+    # Remove punctuation using regex
+    cleaned_text = re.sub(pattern, "", text)
+
+    return cleaned_text
+
+
 def main_keyword(text: str) -> str:
-    llm = OpenAI(temperature=0.9)
+    llm = OpenAI(model_name="text-davinci-003", temperature=0.9)
     prompt = PromptTemplate(
         input_variables=["text"],
-        template="Turn this sentence into a short search query for related articles: '{text}'. Return the unquoted query only."
+        template="Turn this sentence into a short search query for related articles: '{text}'. Return the query only."
     )
 
     chain = LLMChain(llm=llm, prompt=prompt)
     chain_output = chain.run(text)
-    return chain_output
+    return remove_punctuation(chain_output)
+
 
 """
 class TestSpider(scrapy.Spider):
@@ -216,6 +244,7 @@ def main(message: str):
             for i_ref, ref in enumerate(reference_list):
                 send_action(name="action0", trigger=f"Dig_Deeper {i_ref}",
                             description=ref)
+
 
 @action("action0")
 def on_action(action):
