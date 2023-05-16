@@ -7,8 +7,8 @@ from langchain import OpenAI, PromptTemplate, LLMChain
 from selenium import webdriver
 from selenium.common import TimeoutException
 from selenium.webdriver import Keys
-from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.common.by import By
+from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.wait import WebDriverWait
 
@@ -22,7 +22,7 @@ sites = [
         "toggle_class": None
     },
     {
-        "link": "https://oversight.house.gov/",
+        "link": "https://oversight.house.gov/?s=yo+mama",
         "id": "mobile-menu-search-input",
         "url_wrapper_class": "post",
         "toggle_class": "navbar-toggle"
@@ -48,10 +48,7 @@ def filter_out_nones(l: list):
 
 
 def scrape_article_only(link: str) -> str:
-    options = Options()
-    options.add_argument('--headless')
-    driver = webdriver.Firefox(options=options)
-    driver.set_window_size(375, 667)  # Example dimensions for iPhone 6/7/8
+    global driver
 
     # Load page
     driver.get(link)
@@ -59,17 +56,19 @@ def scrape_article_only(link: str) -> str:
     article_elem = driver.find_element(By.CSS_SELECTOR, "article")
     # Extract text from <article> element
     article_text = article_elem.text
-    # Close driver
-    driver.quit()
     return article_text
+
+
+def initialise_webdriver():
+    global driver
+    options = Options()
+    # options.add_argument('--headless')
+    driver = webdriver.Firefox(options=options)
+    driver.set_window_size(375, 667)  # Example dimensions for iPhone 6/7/8
 
 
 def scrape_link(link: str, id: str, url_wrapper_class: str, toggle_class: Optional[str] = None,
                 query: str = "immigration healthcare") -> List[Dict[str, str]]:
-    options = Options()
-    options.add_argument('--headless')
-    driver = webdriver.Firefox(options=options)
-    driver.set_window_size(375, 667)  # Example dimensions for iPhone 6/7/8
 
     # navigate to your website
     driver.get(link)
@@ -93,10 +92,9 @@ def scrape_link(link: str, id: str, url_wrapper_class: str, toggle_class: Option
                                                                                f" | //ul[contains(concat(' ', normalize-space(@class), ' '), ' {url_wrapper_class} ')]//a[not(@target='_blank')]")))
     except TimeoutException:
         print("Timed out: nothing found!")
-        driver.quit()
         return []
 
-    search_results
+    print(search_results)
     urls = list(dict.fromkeys(filter_out_nones([result.get_attribute("href") for result in search_results])))
     print(urls)
     articles_scraped = 0
@@ -117,8 +115,6 @@ def scrape_link(link: str, id: str, url_wrapper_class: str, toggle_class: Option
         if articles_scraped >= NUM_LINKS:
             break
 
-    # close the browser
-    driver.quit()
     # time.sleep(1000)
     return articles
 
@@ -142,10 +138,10 @@ def main_scrape(query: str = "immigration healthcare"):
     for site in sites:
         articles.extend(scrape_link(link=site["link"], id=site["id"], url_wrapper_class=site["url_wrapper_class"],
                                     toggle_class=site["toggle_class"], query=query))
-    # print(articles)
     summaries = []
     for article in articles:
         summaries.append({"src": article["src"], "text": summarise(article["text"])})
+
     return summaries
 
 
@@ -191,37 +187,25 @@ def main_keyword(text: str) -> str:
     return remove_punctuation(chain_output)
 
 
-"""
-class TestSpider(scrapy.Spider):
-    name = 'test'
-    def start_requests(self):
-        yield scrapy.Requests()
-
-
-def extract_article_web(url: str) -> str:
-    process = CrawlerProcess()
-    process.crawl(TestSpider)
-    process.start()
-"""
-
-
 @on_message  # this function will be called every time a user inputs a message in the UI
 def main(message: str):
     load_dotenv()
     # Initialise query
     visited_references.clear()
-
+    print("\n\n\n#############################\n\n\n")
     send_message(
         content=f"Your article makes these claims:",
     )
     claims = main_claims(message)
+    # TODO: regex out only ordered claims (with 1.)
     send_message(
         content=f"{claims}",
     )
     send_message(
         content=f"Analysing Claims...",
     )
-    claims = [claim for claim in claims.split('\n') if claim != '']
+    # Extract skills as a list
+    claims = re.findall(r'\d+\.\s+(.+)', claims)
     keywords = []
     for claim in claims:
         # HACK: removing 'umu' from claim
@@ -230,6 +214,7 @@ def main(message: str):
     keywords = [keyword.strip() for keyword in keywords]
     print(keywords)
 
+    initialise_webdriver()
     for keyword in keywords:
         summarised_articles = main_scrape(keyword)
         articles_print = "\n\n".join([article["text"] for article in summarised_articles])
@@ -244,6 +229,7 @@ def main(message: str):
             for i_ref, ref in enumerate(reference_list):
                 send_action(name="action0", trigger=f"Dig_Deeper {i_ref}",
                             description=ref)
+    driver.quit()
 
 
 @action("action0")
